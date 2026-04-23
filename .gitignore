@@ -1,0 +1,17 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Node / wrangler (only present if you later add tooling)
+node_modules/
+.wrangler/
+.dev.vars
+.env
+.env.local
+npm-debug.log*

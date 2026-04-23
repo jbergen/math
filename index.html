@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#4a90e2" />
+  <title>Math Practice</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="app">
+
+    <section id="screen-start" class="screen active">
+      <h1>Math Time! 🚀</h1>
+      <p class="tagline">Add, subtract, and multiply your way to the top!</p>
+      <div id="last-session" class="last-session hidden"></div>
+      <button id="btn-start" class="big-btn primary">Start</button>
+    </section>
+
+    <section id="screen-play" class="screen">
+      <header class="stats-bar">
+        <div class="stat"><span class="stat-icon">⏱️</span><span id="stat-time">0:00</span></div>
+        <div class="stat"><span class="stat-icon">✅</span><span id="stat-correct">0</span><span class="stat-sep">/</span><span id="stat-total">0</span></div>
+        <div class="stat"><span class="stat-icon">🔥</span><span id="stat-streak">0</span></div>
+        <div class="stat"><span class="stat-icon">⭐</span><span id="stat-level">1</span></div>
+      </header>
+
+      <div id="equation" class="equation" aria-live="polite"></div>
+      <div id="feedback" class="feedback"></div>
+
+      <div class="keypad" role="group" aria-label="Number keypad">
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+        <button class="key" data-key="6">6</button>
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+        <button class="key key-fn" data-key="back" aria-label="Backspace">⌫</button>
+        <button class="key" data-key="0">0</button>
+        <button class="key key-go" data-key="submit" aria-label="Submit">✓</button>
+      </div>
+
+      <button id="btn-done" class="small-btn">Done</button>
+    </section>
+
+    <section id="screen-end" class="screen">
+      <h1 id="end-headline">Great session! 🌟</h1>
+      <div class="end-stats">
+        <div class="end-stat"><div class="end-stat-label">Time</div><div id="end-time" class="end-stat-value">0:00</div></div>
+        <div class="end-stat"><div class="end-stat-label">Correct</div><div id="end-accuracy" class="end-stat-value">0%</div></div>
+        <div class="end-stat"><div class="end-stat-label">Problems</div><div id="end-count" class="end-stat-value">0</div></div>
+        <div class="end-stat"><div class="end-stat-label">Top Level</div><div id="end-level" class="end-stat-value">1</div></div>
+      </div>
+      <div id="end-badge" class="end-badge"></div>
+      <button id="btn-again" class="big-btn primary">Play Again</button>
+    </section>
+
+    <div id="confetti" class="confetti" aria-hidden="true"></div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
