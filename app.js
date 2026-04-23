@@ -135,6 +135,8 @@ const screens = {
   start: $("screen-start"),
   play: $("screen-play"),
   end: $("screen-end"),
+  worksheet: $("screen-worksheet"),
+  print: $("screen-print"),
 };
 
 function showScreen(name) {
@@ -365,6 +367,75 @@ function endSession() {
   confettiBurst(accuracy >= 0.8 ? 80 : 30);
 }
 
+// ---------- Worksheet ----------
+const WS_LEVELS = [1, 2, 3, 4, 5, 6, 7];
+const WS_COUNTS = [10, 20, 30];
+const wsSelection = { level: 2, count: 20 };
+
+function buildWorksheet(level, count) {
+  const history = [];
+  const problems = [];
+  for (let i = 0; i < count; i++) {
+    const p = generateProblem(level, history);
+    history.push(p.key);
+    if (history.length > 10) history.shift();
+    problems.push(p);
+  }
+  return problems;
+}
+
+function renderWorksheetChoices() {
+  const levelsEl = $("ws-levels");
+  levelsEl.innerHTML = "";
+  for (const lv of WS_LEVELS) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ws-choice" + (lv === wsSelection.level ? " selected" : "");
+    btn.textContent = String(lv);
+    btn.addEventListener("click", () => {
+      wsSelection.level = lv;
+      renderWorksheetChoices();
+    });
+    levelsEl.appendChild(btn);
+  }
+  const countsEl = $("ws-counts");
+  countsEl.innerHTML = "";
+  for (const n of WS_COUNTS) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ws-choice" + (n === wsSelection.count ? " selected" : "");
+    btn.textContent = String(n);
+    btn.addEventListener("click", () => {
+      wsSelection.count = n;
+      renderWorksheetChoices();
+    });
+    countsEl.appendChild(btn);
+  }
+}
+
+function renderWorksheet(problems) {
+  const ol = $("ws-problems");
+  ol.innerHTML = "";
+  for (const p of problems) {
+    const li = document.createElement("li");
+    const wrap = document.createElement("span");
+    wrap.className = "ws-problem";
+    for (const part of p.parts) {
+      if (part === "?") {
+        const blank = document.createElement("span");
+        blank.className = "ws-blank";
+        wrap.appendChild(blank);
+      } else {
+        const span = document.createElement("span");
+        span.textContent = part;
+        wrap.appendChild(span);
+      }
+    }
+    li.appendChild(wrap);
+    ol.appendChild(li);
+  }
+}
+
 function renderLastSession() {
   const data = storage.load();
   const el = $("last-session");
@@ -388,6 +459,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const hidden = stats.classList.toggle("hidden");
     btn.textContent = hidden ? "Show stats" : "Hide stats";
   });
+
+  $("btn-worksheet").addEventListener("click", () => {
+    renderWorksheetChoices();
+    showScreen("worksheet");
+  });
+  $("btn-worksheet-back").addEventListener("click", () => showScreen("start"));
+  $("btn-make-worksheet").addEventListener("click", () => {
+    const problems = buildWorksheet(wsSelection.level, wsSelection.count);
+    renderWorksheet(problems);
+    showScreen("print");
+  });
+  $("btn-print").addEventListener("click", () => window.print());
+  $("btn-print-back").addEventListener("click", () => showScreen("worksheet"));
 
   document.querySelectorAll(".key").forEach((btn) => {
     btn.addEventListener("click", () => handleKey(btn.dataset.key));

@@ -205,6 +205,101 @@ body {
 .end-stat-value { font-size: 1.8rem; font-weight: 800; margin-top: 4px; }
 .end-badge { font-size: 1.1rem; color: var(--muted); min-height: 1.4em; font-weight: 700; }
 
+/* ---------- Worksheet setup ---------- */
+#screen-worksheet { justify-content: center; align-items: center; text-align: center; gap: 22px; }
+.ws-group { width: 100%; max-width: 420px; }
+.ws-label {
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+.ws-choices { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.ws-choice {
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 800;
+  padding: 14px 22px;
+  min-width: 58px;
+  background: var(--key-bg);
+  color: var(--key-ink);
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 5px 0 var(--key-shadow);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.06s ease, box-shadow 0.06s ease, background 0.12s ease, color 0.12s ease;
+}
+.ws-choice:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--key-shadow); }
+.ws-choice.selected {
+  background: var(--primary);
+  color: white;
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--primary-dark);
+}
+
+/* ---------- Worksheet print screen ---------- */
+#screen-print { padding: 16px 4px; }
+.ws-controls { display: flex; gap: 12px; justify-content: center; align-items: center; margin-bottom: 18px; }
+.worksheet {
+  background: white;
+  border-radius: 14px;
+  padding: 22px 26px;
+  box-shadow: 0 4px 0 var(--key-shadow);
+  color: var(--ink);
+}
+.ws-header h2 { margin: 0 0 6px; font-size: 1.6rem; }
+.ws-meta { display: flex; gap: 24px; font-size: 0.95rem; color: var(--muted); margin-bottom: 18px; flex-wrap: wrap; }
+.ws-blank-line { display: inline-block; border-bottom: 1.5px solid var(--ink); min-width: 140px; height: 1em; vertical-align: bottom; }
+
+.ws-problems {
+  list-style: decimal inside;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.ws-problems li {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  padding: 2px 0;
+}
+.ws-problem { display: inline-flex; align-items: baseline; gap: 0.4ch; margin-left: 6px; }
+.ws-blank {
+  display: inline-block;
+  border-bottom: 2px solid var(--ink);
+  min-width: 2.4ch;
+  height: 1em;
+  margin: 0 0.1ch;
+}
+
+@media (max-width: 520px) {
+  .ws-problems { grid-template-columns: 1fr; }
+}
+
+/* ---------- Print ---------- */
+@page { margin: 0.6in; }
+@media print {
+  html, body { background: white !important; }
+  body { color: black; }
+  #app { max-width: none; padding: 0; }
+  .screen { display: none !important; padding: 0; }
+  #screen-print.active { display: block !important; }
+  .no-print { display: none !important; }
+  .worksheet { box-shadow: none; border-radius: 0; padding: 0; background: white; }
+  .ws-header h2 { font-size: 20pt; }
+  .ws-meta { font-size: 11pt; color: black; }
+  .ws-blank-line { border-bottom-color: black; min-width: 200px; }
+  .ws-problems { font-size: 18pt; gap: 22pt 32pt; }
+  .ws-problem { margin-left: 8pt; }
+  .ws-blank { border-bottom-color: black; min-width: 3ch; }
+  .confetti { display: none !important; }
+}
+
 /* ---------- Confetti ---------- */
 .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .confetti-piece {

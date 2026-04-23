@@ -15,6 +15,43 @@
       <p class="tagline">Add and subtract your way to the top!</p>
       <div id="last-session" class="last-session hidden"></div>
       <button id="btn-start" class="big-btn primary">Start</button>
+      <button id="btn-worksheet" class="small-btn">Print worksheet</button>
+    </section>
+
+    <section id="screen-worksheet" class="screen">
+      <h1>Print worksheet 🖨️</h1>
+      <p class="tagline">Pick a level and how many problems.</p>
+
+      <div class="ws-group">
+        <div class="ws-label">Level</div>
+        <div id="ws-levels" class="ws-choices" role="group" aria-label="Level"></div>
+      </div>
+
+      <div class="ws-group">
+        <div class="ws-label">Problems</div>
+        <div id="ws-counts" class="ws-choices" role="group" aria-label="Number of problems"></div>
+      </div>
+
+      <button id="btn-make-worksheet" class="big-btn primary">Make worksheet</button>
+      <button id="btn-worksheet-back" class="small-btn">Back</button>
+    </section>
+
+    <section id="screen-print" class="screen">
+      <div class="ws-controls no-print">
+        <button id="btn-print" class="big-btn primary">Print</button>
+        <button id="btn-print-back" class="small-btn">Back</button>
+      </div>
+
+      <div id="worksheet" class="worksheet">
+        <header class="ws-header">
+          <h2>Math Worksheet</h2>
+          <div class="ws-meta">
+            <span>Name: <span class="ws-blank-line"></span></span>
+            <span>Date: <span class="ws-blank-line"></span></span>
+          </div>
+        </header>
+        <ol id="ws-problems" class="ws-problems"></ol>
+      </div>
     </section>
 
     <section id="screen-play" class="screen">
