@@ -43,24 +43,21 @@ function randInt(lo, hi) { return Math.floor(Math.random() * (hi - lo + 1)) + lo
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 // Shape: which slot is the unknown. 0 = a?+b=c style (missing first), 1 = a+?=c, 2 = a+b=?
-// Op: '+', '-', '×'
+// Op: '+', '-'
 function levelConfig(level) {
   const ops = ["+"];
   let shapes = [2]; // result-slot only at level 1
   let maxAdd = 10;
   let maxSub = 10;
-  let multiTables = [];
 
-  if (level >= 2) maxAdd = 10;
   if (level >= 2) ops.push("-");
   if (level >= 3) shapes = [0, 1, 2];
   if (level >= 4) { maxAdd = 20; maxSub = 20; }
-  if (level >= 5) { ops.push("×"); multiTables = [0, 1, 2, 10]; }
-  if (level >= 6) { multiTables = [0, 1, 2, 5, 10]; }
-  if (level >= 7) { maxAdd = 50; maxSub = 50; multiTables = [0, 1, 2, 3, 5, 10]; }
-  if (level >= 8) { multiTables = [0, 1, 2, 3, 4, 5, 10]; }
+  if (level >= 5) { maxAdd = 30; maxSub = 30; }
+  if (level >= 6) { maxAdd = 50; maxSub = 50; }
+  if (level >= 7) { maxAdd = 100; maxSub = 50; }
 
-  return { ops, shapes, maxAdd, maxSub, multiTables };
+  return { ops, shapes, maxAdd, maxSub };
 }
 
 function makeProblem(level) {
@@ -73,17 +70,10 @@ function makeProblem(level) {
     a = randInt(0, cfg.maxAdd);
     b = randInt(0, Math.max(0, cfg.maxAdd - a));
     c = a + b;
-  } else if (op === "-") {
+  } else { // -
     a = randInt(1, cfg.maxSub);
     b = randInt(0, a);
     c = a - b;
-  } else { // ×
-    const table = pick(cfg.multiTables);
-    const other = randInt(0, 10);
-    // randomize which is "a" vs "b"
-    if (Math.random() < 0.5) { a = table; b = other; }
-    else { a = other; b = table; }
-    c = a * b;
   }
 
   // Build display with one slot
@@ -121,6 +111,7 @@ const session = {
   buffer: "",
   attemptsOnCurrent: 0,
   history: [],
+  retryQueue: [],
 
   reset() {
     this.level = 1;
@@ -134,6 +125,7 @@ const session = {
     this.buffer = "";
     this.attemptsOnCurrent = 0;
     this.history = [];
+    this.retryQueue = [];
   },
 };
 
@@ -207,9 +199,17 @@ function confettiBurst(n = 24) {
 function nextProblem() {
   session.buffer = "";
   session.attemptsOnCurrent = 0;
-  session.current = generateProblem(session.level, session.history);
-  session.history.push(session.current.key);
-  if (session.history.length > HISTORY_SIZE) session.history.shift();
+
+  if (session.total < SESSION_LENGTH) {
+    session.current = generateProblem(session.level, session.history);
+    session.history.push(session.current.key);
+    if (session.history.length > HISTORY_SIZE) session.history.shift();
+  } else if (session.retryQueue.length > 0) {
+    session.current = session.retryQueue.shift();
+  } else {
+    endSession();
+    return;
+  }
   renderEquation();
 }
 
@@ -231,46 +231,62 @@ function handleKey(key) {
   renderEquation();
 }
 
+function isSessionComplete() {
+  return session.total >= SESSION_LENGTH && session.retryQueue.length === 0;
+}
+
 function submitAnswer() {
   const guess = parseInt(session.buffer, 10);
   const correct = guess === session.current.answer;
   session.attemptsOnCurrent += 1;
+  const isRetry = !!session.current.isRetry;
 
   const eq = $("equation");
   if (correct) {
-    session.correct += 1;
-    session.total += 1;
-    session.streak += 1;
-    session.wrongStreak = 0;
+    if (!isRetry) {
+      session.correct += 1;
+      session.total += 1;
+      session.streak += 1;
+      session.wrongStreak = 0;
 
-    const streakMsg = STREAK_CHEERS[session.streak];
-    setFeedback(streakMsg || pick(CHEERS), "good");
-    eq.classList.remove("flash-good"); void eq.offsetWidth; eq.classList.add("flash-good");
-    confettiBurst(session.streak >= 5 ? 40 : 20);
+      const streakMsg = STREAK_CHEERS[session.streak];
+      setFeedback(streakMsg || pick(CHEERS), "good");
+      confettiBurst(session.streak >= 5 ? 40 : 20);
 
-    if (session.streak > 0 && session.streak % LEVEL_UP_STREAK === 0) {
-      session.level += 1;
-      session.maxLevel = Math.max(session.maxLevel, session.level);
+      if (session.streak > 0 && session.streak % LEVEL_UP_STREAK === 0) {
+        session.level += 1;
+        session.maxLevel = Math.max(session.maxLevel, session.level);
+      }
+    } else {
+      setFeedback("You got it! 🌟", "good");
+      confettiBurst(20);
     }
+    eq.classList.remove("flash-good"); void eq.offsetWidth; eq.classList.add("flash-good");
 
     updateStatsBar();
-    if (session.total >= SESSION_LENGTH) { endSession(); return; }
+    if (isSessionComplete()) { endSession(); return; }
     setTimeout(nextProblem, 650);
   } else {
-    session.wrongStreak += 1;
+    if (!isRetry) session.wrongStreak += 1;
 
     if (session.attemptsOnCurrent >= 2) {
-      session.total += 1;
-      session.streak = 0;
-      setFeedback(`The answer was ${session.current.answer} — you'll get the next one! 💛`, "bad");
       eq.classList.remove("flash-bad"); void eq.offsetWidth; eq.classList.add("flash-bad");
 
-      if (session.wrongStreak >= LEVEL_DOWN_STREAK && session.level > 1) {
-        session.level -= 1;
-        session.wrongStreak = 0;
+      if (!isRetry) {
+        session.total += 1;
+        session.streak = 0;
+        session.retryQueue.push({ ...session.current, isRetry: true });
+        setFeedback(`The answer was ${session.current.answer} — we'll come back to this one!`, "bad");
+
+        if (session.wrongStreak >= LEVEL_DOWN_STREAK && session.level > 1) {
+          session.level -= 1;
+          session.wrongStreak = 0;
+        }
+      } else {
+        setFeedback(`The answer was ${session.current.answer}. Great effort!`, "bad");
       }
       updateStatsBar();
-      if (session.total >= SESSION_LENGTH) { endSession(); return; }
+      if (isSessionComplete()) { endSession(); return; }
       setTimeout(nextProblem, 1400);
     } else {
       setFeedback(pick(GENTLE), "bad");
@@ -321,11 +337,15 @@ function endSession() {
 
   // Headline
   let headline = "Great session! 🌟";
-  if (accuracy >= 0.95) headline = "Perfect-ish! 🏆";
+  if (accuracy >= 0.95) headline = "Fantastic! 🏆";
   else if (accuracy >= 0.8) headline = "Awesome work! 🎉";
   else if (accuracy >= 0.6) headline = "Good try! 💪";
   else headline = "Keep practicing — you're growing! 🌱";
   $("end-headline").textContent = headline;
+
+  // Reset stats visibility each time
+  $("end-stats").classList.add("hidden");
+  $("btn-show-stats").textContent = "Show stats";
 
   storage.save({
     bestAccuracy: Math.max(prior.bestAccuracy || 0, accuracy),
@@ -362,6 +382,12 @@ document.addEventListener("DOMContentLoaded", () => {
   $("btn-start").addEventListener("click", startSession);
   $("btn-again").addEventListener("click", () => { renderLastSession(); showScreen("start"); });
   $("btn-done").addEventListener("click", () => { if (session.total > 0) endSession(); else showScreen("start"); });
+  $("btn-show-stats").addEventListener("click", () => {
+    const stats = $("end-stats");
+    const btn = $("btn-show-stats");
+    const hidden = stats.classList.toggle("hidden");
+    btn.textContent = hidden ? "Show stats" : "Hide stats";
+  });
 
   document.querySelectorAll(".key").forEach((btn) => {
     btn.addEventListener("click", () => handleKey(btn.dataset.key));

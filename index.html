@@ -12,7 +12,7 @@
 
     <section id="screen-start" class="screen active">
       <h1>Math Time! 🚀</h1>
-      <p class="tagline">Add, subtract, and multiply your way to the top!</p>
+      <p class="tagline">Add and subtract your way to the top!</p>
       <div id="last-session" class="last-session hidden"></div>
       <button id="btn-start" class="big-btn primary">Start</button>
     </section>
@@ -48,14 +48,15 @@
 
     <section id="screen-end" class="screen">
       <h1 id="end-headline">Great session! 🌟</h1>
-      <div class="end-stats">
+      <div id="end-badge" class="end-badge"></div>
+      <button id="btn-again" class="big-btn primary">Play Again</button>
+      <button id="btn-show-stats" class="small-btn">Show stats</button>
+      <div id="end-stats" class="end-stats hidden">
         <div class="end-stat"><div class="end-stat-label">Time</div><div id="end-time" class="end-stat-value">0:00</div></div>
         <div class="end-stat"><div class="end-stat-label">Correct</div><div id="end-accuracy" class="end-stat-value">0%</div></div>
         <div class="end-stat"><div class="end-stat-label">Problems</div><div id="end-count" class="end-stat-value">0</div></div>
         <div class="end-stat"><div class="end-stat-label">Top Level</div><div id="end-level" class="end-stat-value">1</div></div>
       </div>
-      <div id="end-badge" class="end-badge"></div>
-      <button id="btn-again" class="big-btn primary">Play Again</button>
     </section>
 
     <div id="confetti" class="confetti" aria-hidden="true"></div>
