@@ -468,6 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("btn-make-worksheet").addEventListener("click", () => {
     const problems = buildWorksheet(wsSelection.level, wsSelection.count);
     renderWorksheet(problems);
+    $("ws-title").textContent = `Math Worksheet — Level ${wsSelection.level}`;
     showScreen("print");
   });
   $("btn-print").addEventListener("click", () => window.print());

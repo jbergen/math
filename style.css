@@ -249,8 +249,9 @@ body {
   box-shadow: 0 4px 0 var(--key-shadow);
   color: var(--ink);
 }
+.ws-header { margin-bottom: 32px; }
 .ws-header h2 { margin: 0 0 6px; font-size: 1.6rem; }
-.ws-meta { display: flex; gap: 24px; font-size: 0.95rem; color: var(--muted); margin-bottom: 18px; flex-wrap: wrap; }
+.ws-meta { display: flex; gap: 24px; font-size: 0.95rem; color: var(--muted); flex-wrap: wrap; }
 .ws-blank-line { display: inline-block; border-bottom: 1.5px solid var(--ink); min-width: 140px; height: 1em; vertical-align: bottom; }
 
 .ws-problems {
@@ -267,6 +268,10 @@ body {
   break-inside: avoid;
   page-break-inside: avoid;
   padding: 2px 0;
+}
+.ws-problems li::marker {
+  font-weight: 400;
+  color: var(--muted);
 }
 .ws-problem { display: inline-flex; align-items: baseline; gap: 0.4ch; margin-left: 6px; }
 .ws-blank {
@@ -291,8 +296,10 @@ body {
   #screen-print.active { display: block !important; }
   .no-print { display: none !important; }
   .worksheet { box-shadow: none; border-radius: 0; padding: 0; background: white; }
+  .ws-header { margin-bottom: 36pt; }
   .ws-header h2 { font-size: 20pt; }
   .ws-meta { font-size: 11pt; color: black; }
+  .ws-problems li::marker { font-weight: 400; color: #888; }
   .ws-blank-line { border-bottom-color: black; min-width: 200px; }
   .ws-problems { font-size: 18pt; gap: 22pt 32pt; }
   .ws-problem { margin-left: 8pt; }
