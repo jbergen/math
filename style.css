@@ -252,22 +252,23 @@ body {
   font-weight: 800;
   padding: 14px 22px;
   min-width: 58px;
-  background: var(--key-bg);
-  color: var(--key-ink);
+  background: #d4dde7;
+  color: #8a99ad;
   border: none;
   border-radius: 16px;
-  box-shadow: 0 5px 0 var(--key-shadow);
+  box-shadow: 0 3px 0 #b8c5d4;
   cursor: pointer;
   touch-action: manipulation;
   transition: transform 0.06s ease, box-shadow 0.06s ease, background 0.12s ease, color 0.12s ease;
 }
-.ws-choice:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--key-shadow); }
+.ws-choice:active { transform: translateY(2px); box-shadow: 0 1px 0 #b8c5d4; }
 .ws-choice.selected {
   background: var(--primary);
   color: white;
-  transform: translateY(3px);
-  box-shadow: 0 2px 0 var(--primary-dark);
+  box-shadow: 0 5px 0 var(--primary-dark);
+  transform: translateY(0);
 }
+.ws-choice.selected:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--primary-dark); }
 
 .ws-ops .ws-choice {
   font-size: 1.7rem;
