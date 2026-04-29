@@ -10,6 +10,8 @@
 <body>
   <main id="app">
 
+    <button id="btn-close" class="close-btn hidden no-print" aria-label="Close">×</button>
+
     <section id="screen-start" class="screen active">
       <button id="btn-menu" class="menu-toggle" aria-label="Menu" aria-haspopup="true" aria-expanded="false">☰</button>
       <div id="menu" class="menu hidden" role="menu">
@@ -38,7 +40,6 @@
       </div>
 
       <button id="btn-settings-start" class="big-btn primary">Start</button>
-      <button id="btn-settings-back" class="small-btn">Back</button>
     </section>
 
     <section id="screen-worksheet" class="screen">
@@ -61,13 +62,11 @@
       </div>
 
       <button id="btn-make-worksheet" class="big-btn primary">Make worksheet</button>
-      <button id="btn-worksheet-back" class="small-btn">Back</button>
     </section>
 
     <section id="screen-print" class="screen">
       <div class="ws-controls no-print">
         <button id="btn-print" class="big-btn primary">Print</button>
-        <button id="btn-print-back" class="small-btn">Back</button>
       </div>
 
       <div id="worksheet" class="worksheet">

@@ -68,6 +68,30 @@ body {
 }
 .menu-toggle:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--key-shadow); }
 
+.close-btn {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--key-shadow);
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+.close-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--key-shadow); }
+
 .menu {
   position: fixed;
   top: calc(68px + env(safe-area-inset-top));

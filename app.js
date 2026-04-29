@@ -188,8 +188,21 @@ const screens = {
   print: $("screen-print"),
 };
 
+// Which screen the close (×) button returns to from the current screen.
+// Screens not listed here hide the close button entirely.
+const CLOSE_TARGET = {
+  settings: "start",
+  worksheet: "start",
+  print: "worksheet",
+};
+
+let activeScreen = "start";
+
 function showScreen(name) {
+  activeScreen = name;
   for (const k of Object.keys(screens)) screens[k].classList.toggle("active", k === name);
+  const closeBtn = $("btn-close");
+  if (closeBtn) closeBtn.classList.toggle("hidden", !(name in CLOSE_TARGET));
 }
 
 function fmtTime(sec) {
@@ -569,7 +582,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSettingsChoices();
     showScreen("settings");
   });
-  $("btn-settings-back").addEventListener("click", () => showScreen("start"));
   $("btn-settings-start").addEventListener("click", startSession);
 
   $("btn-worksheet").addEventListener("click", () => {
@@ -577,7 +589,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderWorksheetChoices();
     showScreen("worksheet");
   });
-  $("btn-worksheet-back").addEventListener("click", () => showScreen("start"));
   $("btn-make-worksheet").addEventListener("click", () => {
     const { worksheet } = loadSettings();
     const problems = buildWorksheet(worksheet.level, worksheet.ops, worksheet.count);
@@ -586,7 +597,11 @@ document.addEventListener("DOMContentLoaded", () => {
     showScreen("print");
   });
   $("btn-print").addEventListener("click", () => window.print());
-  $("btn-print-back").addEventListener("click", () => showScreen("worksheet"));
+
+  $("btn-close").addEventListener("click", () => {
+    const target = CLOSE_TARGET[activeScreen] || "start";
+    showScreen(target);
+  });
 
   document.querySelectorAll(".key").forEach((btn) => {
     btn.addEventListener("click", () => handleKey(btn.dataset.key));
