@@ -13,16 +13,13 @@
     <button id="btn-close" class="close-btn hidden no-print" aria-label="Close">×</button>
 
     <section id="screen-start" class="screen active">
-      <button id="btn-menu" class="menu-toggle" aria-label="Menu" aria-haspopup="true" aria-expanded="false">☰</button>
-      <div id="menu" class="menu hidden" role="menu">
-        <button id="btn-settings" class="menu-item" role="menuitem">⚙️  Settings</button>
-        <button id="btn-worksheet" class="menu-item" role="menuitem">🖨️  Print worksheet</button>
-      </div>
-
       <h1>Math Time! 🚀</h1>
       <p class="tagline">Practice your math your way!</p>
       <div id="last-session" class="last-session hidden"></div>
-      <button id="btn-start" class="big-btn primary">Start</button>
+      <div class="start-actions">
+        <button id="btn-play" class="big-btn primary">▶ Play</button>
+        <button id="btn-worksheet" class="big-btn secondary">🖨️ Print worksheet</button>
+      </div>
     </section>
 
     <section id="screen-settings" class="screen">

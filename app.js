@@ -557,7 +557,10 @@ function renderLastSession() {
 document.addEventListener("DOMContentLoaded", () => {
   renderLastSession();
 
-  $("btn-start").addEventListener("click", startSession);
+  $("btn-play").addEventListener("click", () => {
+    renderSettingsChoices();
+    showScreen("settings");
+  });
   $("btn-again").addEventListener("click", () => { renderLastSession(); showScreen("start"); });
   $("btn-done").addEventListener("click", () => { if (session.total > 0) endSession(); else showScreen("start"); });
   $("btn-show-stats").addEventListener("click", () => {
@@ -567,29 +570,9 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.textContent = hidden ? "Show stats" : "Hide stats";
   });
 
-  const menuEl = $("menu");
-  const menuBtn = $("btn-menu");
-  const closeMenu = () => { menuEl.classList.add("hidden"); menuBtn.setAttribute("aria-expanded", "false"); };
-  const openMenu = () => { menuEl.classList.remove("hidden"); menuBtn.setAttribute("aria-expanded", "true"); };
-  menuBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    menuEl.classList.contains("hidden") ? openMenu() : closeMenu();
-  });
-  document.addEventListener("click", (e) => {
-    if (menuEl.classList.contains("hidden")) return;
-    if (menuEl.contains(e.target) || e.target === menuBtn) return;
-    closeMenu();
-  });
-
-  $("btn-settings").addEventListener("click", () => {
-    closeMenu();
-    renderSettingsChoices();
-    showScreen("settings");
-  });
   $("btn-settings-start").addEventListener("click", startSession);
 
   $("btn-worksheet").addEventListener("click", () => {
-    closeMenu();
     renderWorksheetChoices();
     showScreen("worksheet");
   });
