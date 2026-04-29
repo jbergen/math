@@ -6,6 +6,7 @@ const STORAGE_KEY = "mathApp.v1";
 const HISTORY_SIZE = 5;
 const LEVEL_UP_STREAK = 3;
 const LEVEL_DOWN_STREAK = 2;
+const MAX_LEVEL = 10;
 
 const CHEERS = [
   "Nice! 🎉", "You got it! ⭐", "Math star! ✨", "Keep going! 🚀",
@@ -58,6 +59,9 @@ function levelConfig(level) {
   if (level >= 5) { maxAdd = 30; maxSub = 30; mulMaxA = 10; mulMaxB = 10; }
   if (level >= 6) { maxAdd = 50; maxSub = 50; mulMaxA = 12; mulMaxB = 12; }
   if (level >= 7) { maxAdd = 100; maxSub = 50; mulMaxA = 12; mulMaxB = 12; }
+  if (level >= 8) { maxAdd = 200; maxSub = 100; mulMaxA = 12; mulMaxB = 15; }
+  if (level >= 9) { maxAdd = 500; maxSub = 200; mulMaxA = 15; mulMaxB = 15; }
+  if (level >= 10) { maxAdd = 999; maxSub = 500; mulMaxA = 20; mulMaxB = 20; }
 
   return { shapes, maxAdd, maxSub, mulMaxA, mulMaxB };
 }
@@ -168,7 +172,7 @@ function saveSettings(partial) {
 function clampLevel(n) {
   const lv = Math.floor(Number(n));
   if (!Number.isFinite(lv)) return 1;
-  return Math.min(7, Math.max(1, lv));
+  return Math.min(MAX_LEVEL, Math.max(1, lv));
 }
 
 function sanitizeOps(ops, fallback) {
@@ -317,7 +321,7 @@ function submitAnswer() {
       setFeedback(streakMsg || pick(CHEERS), "good");
       confettiBurst(session.streak >= 5 ? 40 : 20);
 
-      if (session.streak > 0 && session.streak % LEVEL_UP_STREAK === 0) {
+      if (session.streak > 0 && session.streak % LEVEL_UP_STREAK === 0 && session.level < MAX_LEVEL) {
         session.level += 1;
         session.maxLevel = Math.max(session.maxLevel, session.level);
       }
@@ -432,7 +436,7 @@ function endSession() {
 }
 
 // ---------- Worksheet ----------
-const WS_LEVELS = [1, 2, 3, 4, 5, 6, 7];
+const WS_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const WS_COUNTS = [10, 20, 30];
 
 function buildWorksheet(level, ops, count) {
