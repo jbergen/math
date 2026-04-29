@@ -23,8 +23,13 @@
     </section>
 
     <section id="screen-settings" class="screen">
-      <h1>Settings ⚙️</h1>
-      <p class="tagline">Pick where to start and what to practice.</p>
+      <h1>What do you want to practice?</h1>
+
+      <div class="pack-picker">
+        <div id="settings-packs" class="pack-list" aria-label="Skill packs"></div>
+      </div>
+
+      <div class="settings-divider"><span>or free practice</span></div>
 
       <div class="ws-group">
         <div class="ws-label">Starting grade</div>
@@ -36,12 +41,22 @@
         <div id="settings-ops" class="ws-choices ws-ops" role="group" aria-label="Operations"></div>
       </div>
 
-      <button id="btn-settings-start" class="big-btn primary">Start</button>
+      <button id="btn-settings-start" class="big-btn primary">Start free practice</button>
     </section>
 
     <section id="screen-worksheet" class="screen">
       <h1>Print worksheet 🖨️</h1>
-      <p class="tagline">Pick a grade and how many problems.</p>
+
+      <div class="ws-group">
+        <div class="ws-label">Problems per page</div>
+        <div id="ws-counts" class="ws-choices" role="group" aria-label="Number of problems"></div>
+      </div>
+
+      <div class="pack-picker">
+        <div id="ws-packs" class="pack-list" aria-label="Skill packs"></div>
+      </div>
+
+      <div class="settings-divider"><span>or mixed practice</span></div>
 
       <div class="ws-group">
         <div class="ws-label">Grade</div>
@@ -51,11 +66,6 @@
       <div class="ws-group">
         <div class="ws-label">Operations</div>
         <div id="ws-ops" class="ws-choices ws-ops" role="group" aria-label="Operations"></div>
-      </div>
-
-      <div class="ws-group">
-        <div class="ws-label">Problems</div>
-        <div id="ws-counts" class="ws-choices" role="group" aria-label="Number of problems"></div>
       </div>
 
       <button id="btn-make-worksheet" class="big-btn primary">Make worksheet</button>
@@ -90,18 +100,27 @@
       <div id="feedback" class="feedback"></div>
 
       <div class="keypad" role="group" aria-label="Number keypad">
-        <button class="key" data-key="7">7</button>
-        <button class="key" data-key="8">8</button>
-        <button class="key" data-key="9">9</button>
-        <button class="key" data-key="4">4</button>
-        <button class="key" data-key="5">5</button>
-        <button class="key" data-key="6">6</button>
-        <button class="key" data-key="1">1</button>
-        <button class="key" data-key="2">2</button>
-        <button class="key" data-key="3">3</button>
-        <button class="key key-fn" data-key="back" aria-label="Backspace">⌫</button>
-        <button class="key" data-key="0">0</button>
-        <button class="key key-go" data-key="submit" aria-label="Submit">✓</button>
+        <div class="keypad-row">
+          <button class="key" data-key="7">7</button>
+          <button class="key" data-key="8">8</button>
+          <button class="key" data-key="9">9</button>
+        </div>
+        <div class="keypad-row">
+          <button class="key" data-key="4">4</button>
+          <button class="key" data-key="5">5</button>
+          <button class="key" data-key="6">6</button>
+        </div>
+        <div class="keypad-row">
+          <button class="key" data-key="1">1</button>
+          <button class="key" data-key="2">2</button>
+          <button class="key" data-key="3">3</button>
+        </div>
+        <div class="keypad-row">
+          <button class="key key-fn" data-key="back" aria-label="Backspace">⌫</button>
+          <button class="key" data-key="0">0</button>
+          <button class="key key-dot hidden" data-key="." aria-label="Decimal point">.</button>
+          <button class="key key-go" data-key="submit" aria-label="Submit">✓</button>
+        </div>
       </div>
 
       <button id="btn-done" class="small-btn">Done</button>

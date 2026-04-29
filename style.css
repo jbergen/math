@@ -187,10 +187,14 @@ body {
 
 /* ---------- Keypad ---------- */
 .keypad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   margin-top: 8px;
+}
+.keypad-row {
+  display: flex;
+  gap: 12px;
 }
 .key {
   font: inherit;
@@ -198,6 +202,7 @@ body {
   font-weight: 800;
   padding: 18px 0;
   min-height: 68px;
+  flex: 1;
   background: var(--key-bg);
   color: var(--key-ink);
   border: none;
@@ -212,6 +217,7 @@ body {
 .key-fn:active { box-shadow: 0 2px 0 var(--fn-dark); }
 .key-go { background: var(--go); color: white; box-shadow: 0 5px 0 var(--go-dark); }
 .key-go:active { box-shadow: 0 2px 0 var(--go-dark); }
+.key-dot { background: var(--key-bg); }
 
 /* ---------- End ---------- */
 #screen-end { justify-content: center; align-items: center; text-align: center; gap: 20px; }
@@ -276,6 +282,87 @@ body {
   padding: 12px 18px;
 }
 
+/* ---------- Skill-pack picker ---------- */
+.pack-picker {
+  width: 100%;
+  max-width: 460px;
+}
+.pack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+.pack-grade {
+  background: white;
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: 0 3px 0 var(--key-shadow);
+}
+.pack-grade-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+.pack-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pack-row-tight { gap: 6px; }
+.pack-chip {
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  background: var(--bg);
+  color: var(--ink);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 0 var(--key-shadow);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.12s ease;
+}
+.pack-chip:hover { background: var(--bg-2); }
+.pack-chip:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--key-shadow); }
+.pack-chip-small {
+  font-size: 0.95rem;
+  padding: 6px 10px;
+  min-width: 38px;
+}
+.pack-subgroup { margin-top: 10px; }
+.pack-subgroup-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.settings-divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  gap: 12px;
+}
+.settings-divider::before,
+.settings-divider::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background: var(--bg-2);
+  border-radius: 2px;
+}
+
 /* ---------- Worksheet print screen ---------- */
 #screen-print { padding: 16px 4px; }
 .ws-controls { display: flex; gap: 12px; justify-content: center; align-items: center; margin-bottom: 18px; }
@@ -314,7 +401,7 @@ body {
 .ws-blank {
   display: inline-block;
   border-bottom: 2px solid var(--ink);
-  min-width: 2.4ch;
+  min-width: 3ch;
   height: 1em;
   margin: 0 0.1ch;
 }
