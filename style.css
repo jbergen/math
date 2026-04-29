@@ -205,8 +205,10 @@ body {
 .end-stat-value { font-size: 1.8rem; font-weight: 800; margin-top: 4px; }
 .end-badge { font-size: 1.1rem; color: var(--muted); min-height: 1.4em; font-weight: 700; }
 
-/* ---------- Worksheet setup ---------- */
-#screen-worksheet { justify-content: center; align-items: center; text-align: center; gap: 22px; }
+/* ---------- Worksheet setup / Settings ---------- */
+#screen-worksheet,
+#screen-settings { justify-content: center; align-items: center; text-align: center; gap: 22px; }
+#screen-settings h1 { margin: 0; }
 .ws-group { width: 100%; max-width: 420px; }
 .ws-label {
   font-weight: 700;
@@ -237,6 +239,12 @@ body {
   color: white;
   transform: translateY(3px);
   box-shadow: 0 2px 0 var(--primary-dark);
+}
+
+.ws-ops .ws-choice {
+  font-size: 1.7rem;
+  min-width: 64px;
+  padding: 12px 18px;
 }
 
 /* ---------- Worksheet print screen ---------- */

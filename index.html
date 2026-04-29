@@ -12,10 +12,29 @@
 
     <section id="screen-start" class="screen active">
       <h1>Math Time! 🚀</h1>
-      <p class="tagline">Add and subtract your way to the top!</p>
+      <p class="tagline">Practice your math your way!</p>
       <div id="last-session" class="last-session hidden"></div>
       <button id="btn-start" class="big-btn primary">Start</button>
+      <button id="btn-settings" class="small-btn">Settings</button>
       <button id="btn-worksheet" class="small-btn">Print worksheet</button>
+    </section>
+
+    <section id="screen-settings" class="screen">
+      <h1>Settings ⚙️</h1>
+      <p class="tagline">Pick where to start and what to practice.</p>
+
+      <div class="ws-group">
+        <div class="ws-label">Starting level</div>
+        <div id="settings-levels" class="ws-choices" role="group" aria-label="Starting level"></div>
+      </div>
+
+      <div class="ws-group">
+        <div class="ws-label">Operations</div>
+        <div id="settings-ops" class="ws-choices ws-ops" role="group" aria-label="Operations"></div>
+      </div>
+
+      <button id="btn-settings-start" class="big-btn primary">Start</button>
+      <button id="btn-settings-back" class="small-btn">Back</button>
     </section>
 
     <section id="screen-worksheet" class="screen">
@@ -25,6 +44,11 @@
       <div class="ws-group">
         <div class="ws-label">Level</div>
         <div id="ws-levels" class="ws-choices" role="group" aria-label="Level"></div>
+      </div>
+
+      <div class="ws-group">
+        <div class="ws-label">Operations</div>
+        <div id="ws-ops" class="ws-choices ws-ops" role="group" aria-label="Operations"></div>
       </div>
 
       <div class="ws-group">

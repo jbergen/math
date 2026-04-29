@@ -39,30 +39,32 @@ const storage = {
 };
 
 // ---------- Problem generation ----------
+const ALL_OPS = ["+", "-", "×", "÷"];
+const OP_LABEL = { "+": "+", "-": "−", "×": "×", "÷": "÷" };
+
 function randInt(lo, hi) { return Math.floor(Math.random() * (hi - lo + 1)) + lo; }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-// Shape: which slot is the unknown. 0 = a?+b=c style (missing first), 1 = a+?=c, 2 = a+b=?
-// Op: '+', '-'
+// Difficulty knobs only — operations are chosen by the user.
+// Shape: which slot is the unknown. 0 = ?_op_b=c, 1 = a_op_?=c, 2 = a_op_b=?
 function levelConfig(level) {
-  const ops = ["+"];
   let shapes = [2]; // result-slot only at level 1
   let maxAdd = 10;
   let maxSub = 10;
+  let mulMaxA = 5, mulMaxB = 5;
 
-  if (level >= 2) ops.push("-");
   if (level >= 3) shapes = [0, 1, 2];
-  if (level >= 4) { maxAdd = 20; maxSub = 20; }
-  if (level >= 5) { maxAdd = 30; maxSub = 30; }
-  if (level >= 6) { maxAdd = 50; maxSub = 50; }
-  if (level >= 7) { maxAdd = 100; maxSub = 50; }
+  if (level >= 4) { maxAdd = 20; maxSub = 20; mulMaxA = 10; mulMaxB = 5; }
+  if (level >= 5) { maxAdd = 30; maxSub = 30; mulMaxA = 10; mulMaxB = 10; }
+  if (level >= 6) { maxAdd = 50; maxSub = 50; mulMaxA = 12; mulMaxB = 12; }
+  if (level >= 7) { maxAdd = 100; maxSub = 50; mulMaxA = 12; mulMaxB = 12; }
 
-  return { ops, shapes, maxAdd, maxSub };
+  return { shapes, maxAdd, maxSub, mulMaxA, mulMaxB };
 }
 
-function makeProblem(level) {
+function makeProblem(level, ops) {
   const cfg = levelConfig(level);
-  const op = pick(cfg.ops);
+  const op = pick(ops);
   const shape = pick(cfg.shapes);
 
   let a, b, c;
@@ -70,16 +72,22 @@ function makeProblem(level) {
     a = randInt(0, cfg.maxAdd);
     b = randInt(0, Math.max(0, cfg.maxAdd - a));
     c = a + b;
-  } else { // -
+  } else if (op === "-") {
     a = randInt(1, cfg.maxSub);
     b = randInt(0, a);
     c = a - b;
+  } else if (op === "×") {
+    a = randInt(0, cfg.mulMaxA);
+    b = randInt(0, cfg.mulMaxB);
+    c = a * b;
+  } else { // ÷  — frame as dividend ÷ divisor = quotient with whole-number result
+    const q = randInt(0, cfg.mulMaxA);
+    const d = randInt(1, Math.max(1, cfg.mulMaxB));
+    a = q * d; // dividend
+    b = d;     // divisor
+    c = q;     // quotient
   }
 
-  // Build display with one slot
-  // shape 0: ? op b = c  (answer = a)
-  // shape 1: a op ? = c  (answer = b)
-  // shape 2: a op b = ?  (answer = c)
   let answer, parts;
   if (shape === 0) { answer = a; parts = ["?", op, String(b), "=", String(c)]; }
   else if (shape === 1) { answer = b; parts = [String(a), op, "?", "=", String(c)]; }
@@ -89,17 +97,18 @@ function makeProblem(level) {
   return { op, a, b, c, shape, answer, parts, key };
 }
 
-function generateProblem(level, history) {
+function generateProblem(level, ops, history) {
   for (let i = 0; i < 20; i++) {
-    const p = makeProblem(level);
+    const p = makeProblem(level, ops);
     if (!history.includes(p.key)) return p;
   }
-  return makeProblem(level);
+  return makeProblem(level, ops);
 }
 
 // ---------- Session ----------
 const session = {
   level: 1,
+  ops: ["+", "-"],
   correct: 0,
   total: 0,
   streak: 0,
@@ -113,13 +122,14 @@ const session = {
   history: [],
   retryQueue: [],
 
-  reset() {
-    this.level = 1;
+  reset(startingLevel, ops) {
+    this.level = startingLevel;
+    this.ops = ops.slice();
     this.correct = 0;
     this.total = 0;
     this.streak = 0;
     this.wrongStreak = 0;
-    this.maxLevel = 1;
+    this.maxLevel = startingLevel;
     this.startedAt = Date.now();
     this.current = null;
     this.buffer = "";
@@ -129,10 +139,49 @@ const session = {
   },
 };
 
+// ---------- Settings ----------
+const DEFAULT_GAME_SETTINGS = { startingLevel: 1, ops: ["+", "-"] };
+const DEFAULT_WS_SETTINGS = { level: 2, count: 20, ops: ["+", "-"] };
+
+function loadSettings() {
+  const data = storage.load() || {};
+  const game = data.gameSettings || {};
+  const ws = data.worksheetSettings || {};
+  return {
+    game: {
+      startingLevel: clampLevel(game.startingLevel ?? DEFAULT_GAME_SETTINGS.startingLevel),
+      ops: sanitizeOps(game.ops, DEFAULT_GAME_SETTINGS.ops),
+    },
+    worksheet: {
+      level: clampLevel(ws.level ?? DEFAULT_WS_SETTINGS.level),
+      count: WS_COUNTS.includes(ws.count) ? ws.count : DEFAULT_WS_SETTINGS.count,
+      ops: sanitizeOps(ws.ops, DEFAULT_WS_SETTINGS.ops),
+    },
+  };
+}
+
+function saveSettings(partial) {
+  const prior = storage.load() || {};
+  storage.save({ ...prior, ...partial });
+}
+
+function clampLevel(n) {
+  const lv = Math.floor(Number(n));
+  if (!Number.isFinite(lv)) return 1;
+  return Math.min(7, Math.max(1, lv));
+}
+
+function sanitizeOps(ops, fallback) {
+  if (!Array.isArray(ops)) return fallback.slice();
+  const filtered = ops.filter((o) => ALL_OPS.includes(o));
+  return filtered.length > 0 ? filtered : fallback.slice();
+}
+
 // ---------- UI refs ----------
 const $ = (id) => document.getElementById(id);
 const screens = {
   start: $("screen-start"),
+  settings: $("screen-settings"),
   play: $("screen-play"),
   end: $("screen-end"),
   worksheet: $("screen-worksheet"),
@@ -203,7 +252,7 @@ function nextProblem() {
   session.attemptsOnCurrent = 0;
 
   if (session.total < SESSION_LENGTH) {
-    session.current = generateProblem(session.level, session.history);
+    session.current = generateProblem(session.level, session.ops, session.history);
     session.history.push(session.current.key);
     if (session.history.length > HISTORY_SIZE) session.history.shift();
   } else if (session.retryQueue.length > 0) {
@@ -301,7 +350,8 @@ function submitAnswer() {
 
 // ---------- Start / End ----------
 function startSession() {
-  session.reset();
+  const { game } = loadSettings();
+  session.reset(game.startingLevel, game.ops);
   updateStatsBar();
   setFeedback("");
   showScreen("play");
@@ -350,6 +400,7 @@ function endSession() {
   $("btn-show-stats").textContent = "Show stats";
 
   storage.save({
+    ...prior,
     bestAccuracy: Math.max(prior.bestAccuracy || 0, accuracy),
     bestTimePerProblemSec: Math.min(prior.bestTimePerProblemSec || Infinity, timePerProblem),
     lifetimeProblems: (prior.lifetimeProblems || 0) + session.total,
@@ -370,13 +421,12 @@ function endSession() {
 // ---------- Worksheet ----------
 const WS_LEVELS = [1, 2, 3, 4, 5, 6, 7];
 const WS_COUNTS = [10, 20, 30];
-const wsSelection = { level: 2, count: 20 };
 
-function buildWorksheet(level, count) {
+function buildWorksheet(level, ops, count) {
   const history = [];
   const problems = [];
   for (let i = 0; i < count; i++) {
-    const p = generateProblem(level, history);
+    const p = generateProblem(level, ops, history);
     history.push(p.key);
     if (history.length > 10) history.shift();
     problems.push(p);
@@ -384,33 +434,45 @@ function buildWorksheet(level, count) {
   return problems;
 }
 
+function renderChoiceGroup(host, items, isSelected, onClick, format) {
+  host.innerHTML = "";
+  for (const item of items) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ws-choice" + (isSelected(item) ? " selected" : "");
+    btn.textContent = format ? format(item) : String(item);
+    btn.addEventListener("click", () => onClick(item));
+    host.appendChild(btn);
+  }
+}
+
 function renderWorksheetChoices() {
-  const levelsEl = $("ws-levels");
-  levelsEl.innerHTML = "";
-  for (const lv of WS_LEVELS) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "ws-choice" + (lv === wsSelection.level ? " selected" : "");
-    btn.textContent = String(lv);
-    btn.addEventListener("click", () => {
-      wsSelection.level = lv;
+  const { worksheet } = loadSettings();
+  renderChoiceGroup(
+    $("ws-levels"),
+    WS_LEVELS,
+    (lv) => lv === worksheet.level,
+    (lv) => { saveSettings({ worksheetSettings: { ...worksheet, level: lv } }); renderWorksheetChoices(); },
+  );
+  renderChoiceGroup(
+    $("ws-ops"),
+    ALL_OPS,
+    (op) => worksheet.ops.includes(op),
+    (op) => {
+      const has = worksheet.ops.includes(op);
+      const next = has ? worksheet.ops.filter((o) => o !== op) : [...worksheet.ops, op];
+      if (next.length === 0) return; // require at least one op
+      saveSettings({ worksheetSettings: { ...worksheet, ops: next } });
       renderWorksheetChoices();
-    });
-    levelsEl.appendChild(btn);
-  }
-  const countsEl = $("ws-counts");
-  countsEl.innerHTML = "";
-  for (const n of WS_COUNTS) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "ws-choice" + (n === wsSelection.count ? " selected" : "");
-    btn.textContent = String(n);
-    btn.addEventListener("click", () => {
-      wsSelection.count = n;
-      renderWorksheetChoices();
-    });
-    countsEl.appendChild(btn);
-  }
+    },
+    (op) => OP_LABEL[op],
+  );
+  renderChoiceGroup(
+    $("ws-counts"),
+    WS_COUNTS,
+    (n) => n === worksheet.count,
+    (n) => { saveSettings({ worksheetSettings: { ...worksheet, count: n } }); renderWorksheetChoices(); },
+  );
 }
 
 function renderWorksheet(problems) {
@@ -434,6 +496,34 @@ function renderWorksheet(problems) {
     li.appendChild(wrap);
     ol.appendChild(li);
   }
+}
+
+// ---------- Settings screen ----------
+function renderSettingsChoices() {
+  const { game } = loadSettings();
+  renderChoiceGroup(
+    $("settings-levels"),
+    WS_LEVELS,
+    (lv) => lv === game.startingLevel,
+    (lv) => { saveSettings({ gameSettings: { ...game, startingLevel: lv } }); renderSettingsChoices(); },
+  );
+  renderChoiceGroup(
+    $("settings-ops"),
+    ALL_OPS,
+    (op) => game.ops.includes(op),
+    (op) => {
+      const has = game.ops.includes(op);
+      const next = has ? game.ops.filter((o) => o !== op) : [...game.ops, op];
+      if (next.length === 0) return;
+      saveSettings({ gameSettings: { ...game, ops: next } });
+      renderSettingsChoices();
+    },
+    (op) => OP_LABEL[op],
+  );
+}
+
+function opsLabel(ops) {
+  return ops.map((o) => OP_LABEL[o]).join(" ");
 }
 
 function renderLastSession() {
@@ -460,15 +550,23 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.textContent = hidden ? "Show stats" : "Hide stats";
   });
 
+  $("btn-settings").addEventListener("click", () => {
+    renderSettingsChoices();
+    showScreen("settings");
+  });
+  $("btn-settings-back").addEventListener("click", () => showScreen("start"));
+  $("btn-settings-start").addEventListener("click", startSession);
+
   $("btn-worksheet").addEventListener("click", () => {
     renderWorksheetChoices();
     showScreen("worksheet");
   });
   $("btn-worksheet-back").addEventListener("click", () => showScreen("start"));
   $("btn-make-worksheet").addEventListener("click", () => {
-    const problems = buildWorksheet(wsSelection.level, wsSelection.count);
+    const { worksheet } = loadSettings();
+    const problems = buildWorksheet(worksheet.level, worksheet.ops, worksheet.count);
     renderWorksheet(problems);
-    $("ws-title").textContent = `Math Worksheet — Level ${wsSelection.level}`;
+    $("ws-title").textContent = `Math Worksheet — Level ${worksheet.level} (${opsLabel(worksheet.ops)})`;
     showScreen("print");
   });
   $("btn-print").addEventListener("click", () => window.print());
