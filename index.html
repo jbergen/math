@@ -11,12 +11,16 @@
   <main id="app">
 
     <section id="screen-start" class="screen active">
+      <button id="btn-menu" class="menu-toggle" aria-label="Menu" aria-haspopup="true" aria-expanded="false">☰</button>
+      <div id="menu" class="menu hidden" role="menu">
+        <button id="btn-settings" class="menu-item" role="menuitem">⚙️  Settings</button>
+        <button id="btn-worksheet" class="menu-item" role="menuitem">🖨️  Print worksheet</button>
+      </div>
+
       <h1>Math Time! 🚀</h1>
       <p class="tagline">Practice your math your way!</p>
       <div id="last-session" class="last-session hidden"></div>
       <button id="btn-start" class="big-btn primary">Start</button>
-      <button id="btn-settings" class="small-btn">Settings</button>
-      <button id="btn-worksheet" class="small-btn">Print worksheet</button>
     </section>
 
     <section id="screen-settings" class="screen">
