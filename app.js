@@ -4,9 +4,9 @@
 const SESSION_LENGTH = 20;
 const STORAGE_KEY = "mathApp.v1";
 const HISTORY_SIZE = 5;
-const LEVEL_UP_STREAK = 3;
-const LEVEL_DOWN_STREAK = 2;
-const MAX_LEVEL = 10;
+const GRADE_UP_STREAK = 3;
+const GRADE_DOWN_STREAK = 2;
+const MAX_GRADE = 5;
 
 const CHEERS = [
   "Nice! 🎉", "You got it! ⭐", "Math star! ✨", "Keep going! 🚀",
@@ -48,26 +48,22 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 // Difficulty knobs only — operations are chosen by the user.
 // Shape: which slot is the unknown. 0 = ?_op_b=c, 1 = a_op_?=c, 2 = a_op_b=?
-function levelConfig(level) {
-  let shapes = [2]; // result-slot only at level 1
-  let maxAdd = 10;
-  let maxSub = 10;
+function gradeConfig(grade) {
+  // Grade 1: result-slot only, smallest numbers (early elementary).
+  let shapes = [2];
+  let maxAdd = 10, maxSub = 10;
   let mulMaxA = 5, mulMaxB = 5;
 
-  if (level >= 3) shapes = [0, 1, 2];
-  if (level >= 4) { maxAdd = 20; maxSub = 20; mulMaxA = 10; mulMaxB = 5; }
-  if (level >= 5) { maxAdd = 30; maxSub = 30; mulMaxA = 10; mulMaxB = 10; }
-  if (level >= 6) { maxAdd = 50; maxSub = 50; mulMaxA = 12; mulMaxB = 12; }
-  if (level >= 7) { maxAdd = 100; maxSub = 50; mulMaxA = 12; mulMaxB = 12; }
-  if (level >= 8) { maxAdd = 200; maxSub = 100; mulMaxA = 12; mulMaxB = 15; }
-  if (level >= 9) { maxAdd = 500; maxSub = 200; mulMaxA = 15; mulMaxB = 15; }
-  if (level >= 10) { maxAdd = 999; maxSub = 500; mulMaxA = 20; mulMaxB = 20; }
+  if (grade >= 2) { shapes = [0, 1, 2]; maxAdd = 20; maxSub = 20; mulMaxA = 10; mulMaxB = 5; }
+  if (grade >= 3) { maxAdd = 100; maxSub = 50; mulMaxA = 12; mulMaxB = 12; }
+  if (grade >= 4) { maxAdd = 500; maxSub = 200; mulMaxA = 15; mulMaxB = 15; }
+  if (grade >= 5) { maxAdd = 999; maxSub = 500; mulMaxA = 20; mulMaxB = 20; }
 
   return { shapes, maxAdd, maxSub, mulMaxA, mulMaxB };
 }
 
-function makeProblem(level, ops) {
-  const cfg = levelConfig(level);
+function makeProblem(grade, ops) {
+  const cfg = gradeConfig(grade);
   const op = pick(ops);
   const shape = pick(cfg.shapes);
 
@@ -101,23 +97,23 @@ function makeProblem(level, ops) {
   return { op, a, b, c, shape, answer, parts, key };
 }
 
-function generateProblem(level, ops, history) {
+function generateProblem(grade, ops, history) {
   for (let i = 0; i < 20; i++) {
-    const p = makeProblem(level, ops);
+    const p = makeProblem(grade, ops);
     if (!history.includes(p.key)) return p;
   }
-  return makeProblem(level, ops);
+  return makeProblem(grade, ops);
 }
 
 // ---------- Session ----------
 const session = {
-  level: 1,
+  grade: 1,
   ops: ["+", "-"],
   correct: 0,
   total: 0,
   streak: 0,
   wrongStreak: 0,
-  maxLevel: 1,
+  maxGrade: 1,
   startedAt: 0,
   timerId: 0,
   current: null,
@@ -126,14 +122,14 @@ const session = {
   history: [],
   retryQueue: [],
 
-  reset(startingLevel, ops) {
-    this.level = startingLevel;
+  reset(startingGrade, ops) {
+    this.grade = startingGrade;
     this.ops = ops.slice();
     this.correct = 0;
     this.total = 0;
     this.streak = 0;
     this.wrongStreak = 0;
-    this.maxLevel = startingLevel;
+    this.maxGrade = startingGrade;
     this.startedAt = Date.now();
     this.current = null;
     this.buffer = "";
@@ -144,8 +140,8 @@ const session = {
 };
 
 // ---------- Settings ----------
-const DEFAULT_GAME_SETTINGS = { startingLevel: 1, ops: ["+", "-"] };
-const DEFAULT_WS_SETTINGS = { level: 2, count: 20, ops: ["+", "-"] };
+const DEFAULT_GAME_SETTINGS = { startingGrade: 1, ops: ["+", "-"] };
+const DEFAULT_WS_SETTINGS = { grade: 2, count: 20, ops: ["+", "-"] };
 
 function loadSettings() {
   const data = storage.load() || {};
@@ -153,11 +149,12 @@ function loadSettings() {
   const ws = data.worksheetSettings || {};
   return {
     game: {
-      startingLevel: clampLevel(game.startingLevel ?? DEFAULT_GAME_SETTINGS.startingLevel),
+      // Backwards compat: previous schema used `startingLevel` (1–10), now `startingGrade` (1–5).
+      startingGrade: clampGrade(game.startingGrade ?? game.startingLevel ?? DEFAULT_GAME_SETTINGS.startingGrade),
       ops: sanitizeOps(game.ops, DEFAULT_GAME_SETTINGS.ops),
     },
     worksheet: {
-      level: clampLevel(ws.level ?? DEFAULT_WS_SETTINGS.level),
+      grade: clampGrade(ws.grade ?? ws.level ?? DEFAULT_WS_SETTINGS.grade),
       count: WS_COUNTS.includes(ws.count) ? ws.count : DEFAULT_WS_SETTINGS.count,
       ops: sanitizeOps(ws.ops, DEFAULT_WS_SETTINGS.ops),
     },
@@ -169,10 +166,10 @@ function saveSettings(partial) {
   storage.save({ ...prior, ...partial });
 }
 
-function clampLevel(n) {
-  const lv = Math.floor(Number(n));
-  if (!Number.isFinite(lv)) return 1;
-  return Math.min(MAX_LEVEL, Math.max(1, lv));
+function clampGrade(n) {
+  const g = Math.floor(Number(n));
+  if (!Number.isFinite(g)) return 1;
+  return Math.min(MAX_GRADE, Math.max(1, g));
 }
 
 function sanitizeOps(ops, fallback) {
@@ -220,7 +217,7 @@ function updateStatsBar() {
   $("stat-correct").textContent = session.correct;
   $("stat-total").textContent = session.total;
   $("stat-streak").textContent = session.streak;
-  $("stat-level").textContent = session.level;
+  $("stat-grade").textContent = session.grade;
 }
 
 function renderEquation() {
@@ -269,7 +266,7 @@ function nextProblem() {
   session.attemptsOnCurrent = 0;
 
   if (session.total < SESSION_LENGTH) {
-    session.current = generateProblem(session.level, session.ops, session.history);
+    session.current = generateProblem(session.grade, session.ops, session.history);
     session.history.push(session.current.key);
     if (session.history.length > HISTORY_SIZE) session.history.shift();
   } else if (session.retryQueue.length > 0) {
@@ -321,9 +318,9 @@ function submitAnswer() {
       setFeedback(streakMsg || pick(CHEERS), "good");
       confettiBurst(session.streak >= 5 ? 40 : 20);
 
-      if (session.streak > 0 && session.streak % LEVEL_UP_STREAK === 0 && session.level < MAX_LEVEL) {
-        session.level += 1;
-        session.maxLevel = Math.max(session.maxLevel, session.level);
+      if (session.streak > 0 && session.streak % GRADE_UP_STREAK === 0 && session.grade < MAX_GRADE) {
+        session.grade += 1;
+        session.maxGrade = Math.max(session.maxGrade, session.grade);
       }
     } else {
       setFeedback("You got it! 🌟", "good");
@@ -346,8 +343,8 @@ function submitAnswer() {
         session.retryQueue.push({ ...session.current, isRetry: true });
         setFeedback(`The answer was ${session.current.answer} — we'll come back to this one!`, "bad");
 
-        if (session.wrongStreak >= LEVEL_DOWN_STREAK && session.level > 1) {
-          session.level -= 1;
+        if (session.wrongStreak >= GRADE_DOWN_STREAK && session.grade > 1) {
+          session.grade -= 1;
           session.wrongStreak = 0;
         }
       } else {
@@ -368,7 +365,7 @@ function submitAnswer() {
 // ---------- Start / End ----------
 function startSession() {
   const { game } = loadSettings();
-  session.reset(game.startingLevel, game.ops);
+  session.reset(game.startingGrade, game.ops);
   updateStatsBar();
   setFeedback("");
   showScreen("play");
@@ -384,7 +381,7 @@ function endSession() {
   $("end-time").textContent = fmtTime(durSec);
   $("end-accuracy").textContent = Math.round(accuracy * 100) + "%";
   $("end-count").textContent = session.total;
-  $("end-level").textContent = session.maxLevel;
+  $("end-grade").textContent = session.maxGrade;
 
   // Persist & compute badges
   const prior = storage.load() || {
@@ -401,7 +398,7 @@ function endSession() {
   const badges = [];
   if (isBestAcc) badges.push("🏆 New best accuracy!");
   if (isBestSpeed) badges.push("⚡ New speed record!");
-  if (session.maxLevel >= 5) badges.push("⭐ Reached Level " + session.maxLevel + "!");
+  if (session.maxGrade >= 4) badges.push("🎓 Reached Grade " + session.maxGrade + "!");
   $("end-badge").textContent = badges.join("  •  ");
 
   // Headline
@@ -427,7 +424,7 @@ function endSession() {
       durationSec: durSec,
       correct: session.correct,
       total: session.total,
-      maxLevel: session.maxLevel,
+      maxGrade: session.maxGrade,
     },
   });
 
@@ -436,14 +433,14 @@ function endSession() {
 }
 
 // ---------- Worksheet ----------
-const WS_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const WS_GRADES = [1, 2, 3, 4, 5];
 const WS_COUNTS = [10, 20, 30];
 
-function buildWorksheet(level, ops, count) {
+function buildWorksheet(grade, ops, count) {
   const history = [];
   const problems = [];
   for (let i = 0; i < count; i++) {
-    const p = generateProblem(level, ops, history);
+    const p = generateProblem(grade, ops, history);
     history.push(p.key);
     if (history.length > 10) history.shift();
     problems.push(p);
@@ -466,10 +463,10 @@ function renderChoiceGroup(host, items, isSelected, onClick, format) {
 function renderWorksheetChoices() {
   const { worksheet } = loadSettings();
   renderChoiceGroup(
-    $("ws-levels"),
-    WS_LEVELS,
-    (lv) => lv === worksheet.level,
-    (lv) => { saveSettings({ worksheetSettings: { ...worksheet, level: lv } }); renderWorksheetChoices(); },
+    $("ws-grades"),
+    WS_GRADES,
+    (g) => g === worksheet.grade,
+    (g) => { saveSettings({ worksheetSettings: { ...worksheet, grade: g } }); renderWorksheetChoices(); },
   );
   renderChoiceGroup(
     $("ws-ops"),
@@ -519,10 +516,10 @@ function renderWorksheet(problems) {
 function renderSettingsChoices() {
   const { game } = loadSettings();
   renderChoiceGroup(
-    $("settings-levels"),
-    WS_LEVELS,
-    (lv) => lv === game.startingLevel,
-    (lv) => { saveSettings({ gameSettings: { ...game, startingLevel: lv } }); renderSettingsChoices(); },
+    $("settings-grades"),
+    WS_GRADES,
+    (g) => g === game.startingGrade,
+    (g) => { saveSettings({ gameSettings: { ...game, startingGrade: g } }); renderSettingsChoices(); },
   );
   renderChoiceGroup(
     $("settings-ops"),
@@ -578,9 +575,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   $("btn-make-worksheet").addEventListener("click", () => {
     const { worksheet } = loadSettings();
-    const problems = buildWorksheet(worksheet.level, worksheet.ops, worksheet.count);
+    const problems = buildWorksheet(worksheet.grade, worksheet.ops, worksheet.count);
     renderWorksheet(problems);
-    $("ws-title").textContent = `Math Worksheet — Level ${worksheet.level} (${opsLabel(worksheet.ops)})`;
+    $("ws-title").textContent = `Math Worksheet — Grade ${worksheet.grade} (${opsLabel(worksheet.ops)})`;
     showScreen("print");
   });
   $("btn-print").addEventListener("click", () => window.print());
