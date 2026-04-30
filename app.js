@@ -395,6 +395,7 @@ const $ = (id) => document.getElementById(id);
 const screens = {
   start: $("screen-start"),
   settings: $("screen-settings"),
+  customize: $("screen-customize"),
   play: $("screen-play"),
   end: $("screen-end"),
   worksheet: $("screen-worksheet"),
@@ -403,6 +404,7 @@ const screens = {
 
 const CLOSE_TARGET = {
   settings: "start",
+  customize: "settings",
   worksheet: "start",
   print: "worksheet",
 };
@@ -874,8 +876,77 @@ function renderPackList(host, onPick) {
 }
 
 // ---------- Settings screen ----------
+// Suggest what a child can jump into without picking from the menu.
+// Prefers the most-recently-played pack, then the last free-play config,
+// and returns null on a fresh install (the quick-start button is hidden).
+function quickStartSuggestion() {
+  const data = storage.load() || {};
+  const ls = data.lastSession || null;
+  if (ls && ls.packId) {
+    const pack = packById(ls.packId);
+    if (pack) return { kind: "pack", pack, label: pack.label, sub: `Grade ${pack.grade}` };
+  }
+  if (data.lastPackId) {
+    const pack = packById(data.lastPackId);
+    if (pack) return { kind: "pack", pack, label: pack.label, sub: `Grade ${pack.grade}` };
+  }
+  if (ls) {
+    // Returning user, but last session was free-play. Use stored game settings.
+    const { game } = loadSettings();
+    return {
+      kind: "free", grade: game.startingGrade, ops: game.ops,
+      label: `Grade ${game.startingGrade} mixed practice`, sub: opsLabel(game.ops),
+    };
+  }
+  return null;
+}
+
+function renderQuickStart() {
+  const wrap = $("quick-start-wrap");
+  const btn = $("btn-quick-start");
+  const hint = $("quick-start-hint");
+  if (!wrap || !btn) return;
+  const s = quickStartSuggestion();
+  if (!s) {
+    wrap.classList.add("hidden");
+    return;
+  }
+  wrap.classList.remove("hidden");
+  btn.textContent = `▶ ${s.label}`;
+  if (hint) hint.textContent = s.sub || "";
+}
+
+function runQuickStart() {
+  const s = quickStartSuggestion();
+  if (!s) return;
+  if (s.kind === "pack") startPackSession(s.pack);
+  else startSessionWithConfig(freePlayConfig(s.grade, s.ops), null);
+}
+
+// One-tap-by-grade quick-start row, always visible on the settings screen.
+// Tapping a grade starts a free-play session with that grade's default ops.
+function renderGradeQuickStart() {
+  const host = $("grade-quickstart");
+  if (!host) return;
+  host.innerHTML = "";
+  for (const g of WS_GRADES) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ws-choice quick-grade-choice";
+    btn.textContent = `Grade ${g}`;
+    btn.addEventListener("click", () => {
+      const ops = gradeDefaultOps(g);
+      saveSettings({ gameSettings: { startingGrade: g, ops } });
+      startSessionWithConfig(freePlayConfig(g, ops), null);
+    });
+    host.appendChild(btn);
+  }
+}
+
 function renderSettingsChoices() {
   const { game } = loadSettings();
+  renderQuickStart();
+  renderGradeQuickStart();
   renderChoiceGroup(
     $("settings-grades"),
     WS_GRADES,
@@ -932,6 +1003,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   $("btn-settings-start").addEventListener("click", startFreePlaySession);
+  $("btn-quick-start").addEventListener("click", runQuickStart);
+  $("btn-customize").addEventListener("click", () => showScreen("customize"));
 
   $("btn-worksheet").addEventListener("click", () => {
     renderWorksheetChoices();

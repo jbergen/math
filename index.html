@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <meta name="theme-color" content="#4a90e2" />
   <title>Math Practice</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="pragma" content="no-cache" />
+  <meta http-equiv="expires" content="0" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
   <main id="app">
@@ -25,7 +28,24 @@
     <section id="screen-settings" class="screen">
       <h1>What do you want to practice?</h1>
 
+      <div id="quick-start-wrap" class="quick-start hidden">
+        <button id="btn-quick-start" class="big-btn primary"></button>
+        <div id="quick-start-hint" class="quick-start-hint"></div>
+      </div>
+
+      <div class="ws-group quick-grade-group">
+        <div class="ws-label">Quick start — tap your grade</div>
+        <div id="grade-quickstart" class="ws-choices" role="group" aria-label="Quick start grade"></div>
+      </div>
+
+      <button id="btn-customize" class="link-btn">Customize practice ▸</button>
+    </section>
+
+    <section id="screen-customize" class="screen">
+      <h1>Customize</h1>
+
       <div class="pack-picker">
+        <div class="ws-label customize-section-label">Pick a skill</div>
         <div id="settings-packs" class="pack-list" aria-label="Skill packs"></div>
       </div>
 
@@ -94,6 +114,7 @@
         <div class="stat"><span class="stat-icon">✅</span><span id="stat-correct">0</span><span class="stat-sep">/</span><span id="stat-total">0</span></div>
         <div class="stat"><span class="stat-icon">🔥</span><span id="stat-streak">0</span></div>
         <div class="stat"><span class="stat-icon">🎓</span><span id="stat-grade">1</span></div>
+        <button id="btn-done" class="stats-done">Done</button>
       </header>
 
       <div id="equation" class="equation" aria-live="polite"></div>
@@ -123,7 +144,6 @@
         </div>
       </div>
 
-      <button id="btn-done" class="small-btn">Done</button>
     </section>
 
     <section id="screen-end" class="screen">
@@ -142,6 +162,6 @@
     <div id="confetti" class="confetti" aria-hidden="true"></div>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
