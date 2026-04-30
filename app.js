@@ -147,6 +147,68 @@ for (const m of TIMES_TABLE_MULTIPLIERS) {
 
 function packById(id) { return SKILL_PACKS.find((p) => p.id === id) || null; }
 
+// ---------- URL params (share / restore) ----------
+// Encodes only settings (grade, ops, pack, count). Never encodes progress.
+const OPS_TO_LETTER = { "+": "a", "-": "s", "×": "m", "÷": "d" };
+const LETTER_TO_OP = { a: "+", s: "-", m: "×", d: "÷" };
+
+function encodeOps(ops) { return ops.map((o) => OPS_TO_LETTER[o] || "").join(""); }
+function decodeOps(str) {
+  if (!str) return [];
+  return str.split("").map((c) => LETTER_TO_OP[c]).filter(Boolean);
+}
+
+function parseQueryParams() {
+  const sp = new URLSearchParams(location.search);
+  const mode = sp.get("mode");
+  if (!mode) return null;
+  const out = { mode };
+  if (sp.has("pack")) out.pack = sp.get("pack");
+  if (sp.has("grade")) out.grade = parseInt(sp.get("grade"), 10);
+  if (sp.has("ops")) out.ops = decodeOps(sp.get("ops"));
+  if (sp.has("count")) out.count = parseInt(sp.get("count"), 10);
+  return out;
+}
+
+function appBaseUrl() { return location.origin + location.pathname; }
+
+function buildPracticeShareUrl({ pack, grade, ops }) {
+  const sp = new URLSearchParams();
+  sp.set("mode", "play");
+  if (pack) sp.set("pack", pack);
+  else { sp.set("grade", String(grade)); sp.set("ops", encodeOps(ops)); }
+  return `${appBaseUrl()}?${sp.toString()}`;
+}
+
+function buildWorksheetShareUrl({ pack, grade, ops, count }) {
+  const sp = new URLSearchParams();
+  sp.set("mode", "worksheet");
+  if (pack) sp.set("pack", pack);
+  else { sp.set("grade", String(grade)); sp.set("ops", encodeOps(ops)); }
+  sp.set("count", String(count));
+  return `${appBaseUrl()}?${sp.toString()}`;
+}
+
+async function copyShareUrl(url) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(url);
+      return true;
+    }
+  } catch {}
+  // Fallback for older Safari / file:// contexts.
+  const input = document.createElement("input");
+  input.value = url;
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.appendChild(input);
+  input.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch {}
+  document.body.removeChild(input);
+  return ok;
+}
+
 // ---------- Generation ----------
 // All paths produce a problem: { parts, slots, key, ... }
 //   parts: tokens to render. Each "?" denotes an answer slot.
@@ -311,6 +373,7 @@ const session = {
   ops: ["+", "-"],
   config: null,
   pack: null,
+  adaptive: false,
   correct: 0,
   total: 0,
   streak: 0,
@@ -325,9 +388,10 @@ const session = {
   history: [],
   retryQueue: [],
 
-  reset(config, pack) {
+  reset(config, pack, adaptive) {
     this.config = config;
     this.pack = pack || null;
+    this.adaptive = !!adaptive;
     this.grade = config.grade || (pack ? pack.grade : 1);
     this.ops = (config.ops || []).slice();
     this.correct = 0;
@@ -350,7 +414,7 @@ function activeBuffer() { return session.buffers[session.activeSlot] || ""; }
 function setActiveBuffer(s) { session.buffers[session.activeSlot] = s; }
 
 // ---------- Settings ----------
-const DEFAULT_GAME_SETTINGS = { startingGrade: 1, ops: ["+", "-"] };
+const DEFAULT_GAME_SETTINGS = { startingGrade: 1, ops: ["+", "-"], adaptive: false };
 const DEFAULT_WS_SETTINGS = { grade: 2, count: 20, ops: ["+", "-"] };
 
 function loadSettings() {
@@ -362,6 +426,7 @@ function loadSettings() {
       // Backwards compat: previous schema used `startingLevel` (1–10), now `startingGrade` (1–5).
       startingGrade: clampGrade(game.startingGrade ?? game.startingLevel ?? DEFAULT_GAME_SETTINGS.startingGrade),
       ops: sanitizeOps(game.ops, DEFAULT_GAME_SETTINGS.ops),
+      adaptive: typeof game.adaptive === "boolean" ? game.adaptive : DEFAULT_GAME_SETTINGS.adaptive,
     },
     worksheet: {
       grade: clampGrade(ws.grade ?? ws.level ?? DEFAULT_WS_SETTINGS.grade),
@@ -571,8 +636,8 @@ function formatAnswer(p) {
 }
 
 function gradeUpDownAllowed() {
-  // Only adjust grade in free-play. Skill packs hold difficulty fixed.
-  return session.pack == null;
+  // Only adjust grade when the user has opted into adaptive difficulty (free-play only).
+  return session.adaptive && session.pack == null;
 }
 
 function submitAnswer() {
@@ -643,7 +708,9 @@ function submitAnswer() {
 
 // ---------- Start / End ----------
 function startSessionWithConfig(config, pack) {
-  session.reset(config, pack);
+  // Adaptive grade-up/down only applies in free-play, and only when the user opts in.
+  const adaptive = pack ? false : !!loadSettings().game.adaptive;
+  session.reset(config, pack, adaptive);
   if (pack) saveSettings({ lastPackId: pack.id });
   updateStatsBar();
   setFeedback("");
@@ -966,6 +1033,16 @@ function renderSettingsChoices() {
     },
     (op) => OP_LABEL[op],
   );
+  const adaptiveHost = $("settings-adaptive");
+  if (adaptiveHost) {
+    renderChoiceGroup(
+      adaptiveHost,
+      [false, true],
+      (v) => v === !!game.adaptive,
+      (v) => { saveSettings({ gameSettings: { ...game, adaptive: v } }); renderSettingsChoices(); },
+      (v) => (v ? "Adaptive" : "Fixed"),
+    );
+  }
   const packsHost = $("settings-packs");
   if (packsHost) renderPackList(packsHost, (pack) => startPackSession(pack));
 }
@@ -1018,9 +1095,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const problems = buildWorksheetFromConfig(config, worksheet.count);
     renderWorksheet(problems);
     $("ws-title").textContent = `Math Worksheet — Grade ${worksheet.grade} (${opsLabel(worksheet.ops)})`;
+    activeWorksheet = { grade: worksheet.grade, ops: worksheet.ops.slice(), count: worksheet.count };
     showScreen("print");
   });
   $("btn-print").addEventListener("click", () => window.print());
+
+  $("btn-share-practice").addEventListener("click", (e) => sharePracticeFromSession(e.currentTarget));
+  $("btn-share-worksheet").addEventListener("click", (e) => shareActiveWorksheet(e.currentTarget));
 
   $("btn-close").addEventListener("click", () => {
     const target = CLOSE_TARGET[activeScreen] || "start";
@@ -1038,14 +1119,91 @@ document.addEventListener("DOMContentLoaded", () => {
     if (now - lastTouch <= 300) e.preventDefault();
     lastTouch = now;
   }, { passive: false });
+
+  applyQueryParamsOnLoad();
 });
 
-function makeWorksheetForPack(pack) {
+// Tracks the most recently rendered worksheet so the Share button can rebuild its URL.
+let activeWorksheet = null;
+
+function makeWorksheetForPack(pack, countOverride) {
   const { worksheet } = loadSettings();
-  const count = worksheet.count;
+  const count = Number.isFinite(countOverride) ? countOverride : worksheet.count;
   const problems = buildWorksheetFromConfig({ ...pack }, count);
   renderWorksheet(problems);
   $("ws-title").textContent = `Math Worksheet — ${pack.label} (Grade ${pack.grade})`;
   saveSettings({ lastWorksheetPackId: pack.id });
+  activeWorksheet = { pack: pack.id, count };
   showScreen("print");
+}
+
+// ---------- Share handlers ----------
+async function flashCopied(btn, original) {
+  const prior = original ?? btn.textContent;
+  btn.textContent = "✓ Copied!";
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = prior; btn.disabled = false; }, 1500);
+}
+
+function sharePracticeFromSession(btn) {
+  // Prefer the active session if there is one; otherwise the most recent session.
+  let url;
+  if (session.pack) url = buildPracticeShareUrl({ pack: session.pack.id });
+  else if (session.config && session.config.grade) {
+    url = buildPracticeShareUrl({ grade: session.config.grade, ops: session.ops });
+  } else {
+    const data = storage.load() || {};
+    const ls = data.lastSession;
+    if (ls && ls.packId) url = buildPracticeShareUrl({ pack: ls.packId });
+    else {
+      const { game } = loadSettings();
+      url = buildPracticeShareUrl({ grade: game.startingGrade, ops: game.ops });
+    }
+  }
+  copyShareUrl(url).then((ok) => { if (ok) flashCopied(btn); });
+}
+
+function shareActiveWorksheet(btn) {
+  if (!activeWorksheet) return;
+  const url = buildWorksheetShareUrl(activeWorksheet);
+  copyShareUrl(url).then((ok) => { if (ok) flashCopied(btn); });
+}
+
+// ---------- Restore from URL ----------
+function applyQueryParamsOnLoad() {
+  const p = parseQueryParams();
+  if (!p) return;
+  if (p.mode === "play") {
+    if (p.pack) {
+      const pack = packById(p.pack);
+      if (pack) { startPackSession(pack); return; }
+    }
+    if (Number.isFinite(p.grade) && Array.isArray(p.ops) && p.ops.length > 0) {
+      const grade = clampGrade(p.grade);
+      startSessionWithConfig(freePlayConfig(grade, p.ops), null);
+      return;
+    }
+    // Param present but unusable: do nothing (stay on start).
+  } else if (p.mode === "worksheet") {
+    if (p.pack) {
+      const pack = packById(p.pack);
+      if (pack) { makeWorksheetForPack(pack, p.count); return; }
+    }
+    if (Number.isFinite(p.grade) && Array.isArray(p.ops) && p.ops.length > 0) {
+      const grade = clampGrade(p.grade);
+      const count = Number.isFinite(p.count) && p.count > 0 ? p.count : 20;
+      const config = freePlayConfig(grade, p.ops);
+      const problems = buildWorksheetFromConfig(config, count);
+      renderWorksheet(problems);
+      $("ws-title").textContent = `Math Worksheet — Grade ${grade} (${opsLabel(p.ops)})`;
+      activeWorksheet = { grade, ops: p.ops.slice(), count };
+      showScreen("print");
+      return;
+    }
+    // Worksheet mode without enough info: open the setup screen.
+    renderWorksheetChoices();
+    const packsHost = $("ws-packs");
+    if (packsHost) renderPackList(packsHost, (pack) => makeWorksheetForPack(pack));
+    showScreen("worksheet");
+  }
 }

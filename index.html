@@ -8,7 +8,7 @@
   <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="pragma" content="no-cache" />
   <meta http-equiv="expires" content="0" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
   <main id="app">
@@ -61,6 +61,11 @@
         <div id="settings-ops" class="ws-choices ws-ops" role="group" aria-label="Operations"></div>
       </div>
 
+      <div class="ws-group">
+        <div class="ws-label">Difficulty</div>
+        <div id="settings-adaptive" class="ws-choices" role="group" aria-label="Difficulty"></div>
+      </div>
+
       <button id="btn-settings-start" class="big-btn primary">Start free practice</button>
     </section>
 
@@ -94,6 +99,7 @@
     <section id="screen-print" class="screen">
       <div class="ws-controls no-print">
         <button id="btn-print" class="big-btn primary">Print</button>
+        <button id="btn-share-worksheet" class="big-btn secondary">🔗 Share</button>
       </div>
 
       <div id="worksheet" class="worksheet">
@@ -150,6 +156,7 @@
       <h1 id="end-headline">Great session! 🌟</h1>
       <div id="end-badge" class="end-badge"></div>
       <button id="btn-again" class="big-btn primary">Play Again</button>
+      <button id="btn-share-practice" class="big-btn secondary">🔗 Share this practice</button>
       <button id="btn-show-stats" class="small-btn">Show stats</button>
       <div id="end-stats" class="end-stats hidden">
         <div class="end-stat"><div class="end-stat-label">Time</div><div id="end-time" class="end-stat-value">0:00</div></div>
@@ -162,6 +169,6 @@
     <div id="confetti" class="confetti" aria-hidden="true"></div>
   </main>
 
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
